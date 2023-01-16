@@ -1,0 +1,3 @@
+Run `./lib/initiate_db` to create databases
+Run `server.js` to initiate server
+Navigate to `localhost:8080` to use app
