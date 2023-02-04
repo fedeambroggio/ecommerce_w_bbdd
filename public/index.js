@@ -2,7 +2,7 @@ var socket = io();
 
 // PRODUCTOS
 
-socket.on('productos', (data) => {
+socket.on("productos", (data) => {
     const tableContainer = document.querySelector("#table_container");
 
     if (data.length > 0) {
@@ -13,24 +13,60 @@ socket.on('productos', (data) => {
                 <th  style="border: 1px solid black; padding: 8px">Precio</th>
                 <th style="border: 1px solid black; padding: 8px">URL Imagen</th>
             </tr>
-        `
-        data.forEach(el => {
+        `;
+        data.forEach((el) => {
             tableHTML += `
             <tr>
                 <td style="border: 1px solid black; padding: 8px">${el.nombre}</td>
                 <td style="border: 1px solid black; padding: 8px">${el.precio}</td>
                 <td style="border: 1px solid black; padding: 8px"><img style="width: 64px; height: auto" src=${el.foto} alt="prod_img"/></td>
             </tr>
-            `
+            `;
         });
 
-        tableContainer.innerHTML = tableHTML + "</table>"
+        tableContainer.innerHTML = tableHTML + "</table>";
     } else {
-        tableContainer.innerHTML = `<p style="color: red; font-size: 20px">Sin productos para mostrar</p>`
-    }  
-})
+        tableContainer.innerHTML = `<p style="color: red; font-size: 20px">Sin productos para mostrar</p>`;
+    }
+});
 
-const newProductForm = document.getElementById('new_product_form')
+const newProductForm = document.getElementById("new_product_form");
+const btnGetTestProducts = document.getElementById("btn-get-test-products");
+
+btnGetTestProducts.onclick = () => {
+    fetch("/api/productos-test", { method: "GET" })
+        .then((res) => {
+            return res.json();
+        })
+        .then((data) => {
+            console.log("data", data);
+
+            const tableContainer = document.querySelector("#table_container");
+
+            let tableHTML = `
+        <table style="border: 1px solid black;">
+            <tr>
+                <th  style="border: 1px solid black; padding: 8px">Nombre</th>
+                <th  style="border: 1px solid black; padding: 8px">Precio</th>
+                <th style="border: 1px solid black; padding: 8px">URL Imagen</th>
+            </tr>
+        `;
+            data.products.forEach((el) => {
+                tableHTML += `
+            <tr>
+                <td style="border: 1px solid black; padding: 8px">${el.nombre}</td>
+                <td style="border: 1px solid black; padding: 8px">${el.precio}</td>
+                <td style="border: 1px solid black; padding: 8px"><img style="width: 64px; height: auto" src=${el.foto} alt="prod_img"/></td>
+            </tr>
+            `;
+            });
+
+            tableContainer.innerHTML = tableHTML + "</table>";
+        })
+        .catch((err) => {
+            console.log(err);
+        });
+};
 
 new_product_form.onsubmit = (e) => {
     e.preventDefault();
@@ -38,39 +74,38 @@ new_product_form.onsubmit = (e) => {
     let data = {};
 
     [...newProductForm.elements].forEach((item) => {
-        if (item.value && item.value !== "")
-            data[item.name] = item.value;
+        if (item.value && item.value !== "") data[item.name] = item.value;
     });
 
-    socket.emit('nuevoProducto', data)
-
-}
+    socket.emit("nuevoProducto", data);
+};
 
 // MENSAJES
 
-socket.on('mensajes', (data) => {
+socket.on("mensajes", (data) => {
     const mensajesContainer = document.querySelector("#mensajes_container");
 
-    if (data.length > 0) { //Si existe algún mensaje
-        let chatHTML = ``
+    if (data.length > 0) {
+        //Si existe algún mensaje
+        let chatHTML = ``;
 
-        data.forEach(el => {
+        data.forEach((el) => {
             chatHTML += `
             <p>
             <span style="color: blue; font-weight: 900">${el.email}</span>
             <span style="color: brown;">[${el.hora}]: </span>
             <span style="color: green; font-style: italic;">${el.mensaje}</span>            
             </p>
-            `
+            `;
         });
 
-        mensajesContainer.innerHTML = chatHTML
+        mensajesContainer.innerHTML = chatHTML;
     } else {
-        mensajesContainer.innerHTML = `<p style="color: red; font-size: 20px">Sin mensajes para mostrar</p>`
-    }  
-})
+        mensajesContainer.innerHTML = `<p style="color: red; font-size: 20px">Sin mensajes para mostrar</p>`;
+    }
+});
 
-const newMensajeForm = document.getElementById('mensajes_form')
+const newMensajeForm = document.getElementById("mensajes_form");
 
 newMensajeForm.onsubmit = (e) => {
     e.preventDefault();
@@ -78,10 +113,8 @@ newMensajeForm.onsubmit = (e) => {
     let data = {};
 
     [...newMensajeForm.elements].forEach((item) => {
-        if (item.value && item.value !== "")
-            data[item.name] = item.value;
+        if (item.value && item.value !== "") data[item.name] = item.value;
     });
 
-    socket.emit('nuevoMensaje', data)
-
-}
+    socket.emit("nuevoMensaje", data);
+};

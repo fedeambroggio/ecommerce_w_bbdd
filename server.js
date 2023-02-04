@@ -6,6 +6,7 @@ import { optionsMariaDB } from "./options/MariaDB.js";
 import { optionsSQLite3 } from "./options/SQLite3.js";
 import * as http from 'http';
 import { Server } from "socket.io";
+import { generateRandomProducts } from './lib/generateRandomProducts.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,6 +27,11 @@ const io = new Server(server);
 // ENDPOINTS
 app.get('/', (req, res) => {
     res.sendFile('index.html', {root: __dirname})
+});
+
+app.get('/api/productos-test', (req, res) => {
+    const products = generateRandomProducts(5)
+    res.json({products})
 });
 
 
