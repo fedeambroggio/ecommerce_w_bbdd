@@ -39,8 +39,6 @@ btnGetTestProducts.onclick = () => {
             return res.json();
         })
         .then((data) => {
-            console.log("data", data);
-
             const tableContainer = document.querySelector("#table_container");
 
             let tableHTML = `
@@ -74,15 +72,17 @@ new_product_form.onsubmit = (e) => {
     let data = {};
 
     [...newProductForm.elements].forEach((item) => {
-        if (item.value && item.value !== "") data[item.name] = item.value;
+        if (item.value && item.value !== "")
+            data[item.name] = item.value;
     });
 
-    socket.emit("nuevoProducto", data);
-};
+    socket.emit('nuevoProducto', data)
+
+}
 
 // MENSAJES
 
-socket.on("mensajes", (data) => {
+socket.on('mensajes', (data) => {
     const mensajesContainer = document.querySelector("#mensajes_container");
 
     if (data.length > 0) {
@@ -116,5 +116,17 @@ newMensajeForm.onsubmit = (e) => {
         if (item.value && item.value !== "") data[item.name] = item.value;
     });
 
-    socket.emit("nuevoMensaje", data);
+    const finalData = {
+        author: {
+            id: data.email,
+            nombre: data.nombre,
+            apellido: data.apellido,
+            edad: data.edad,
+            avatar: data.avatar,
+            alias: data.alias,
+        },
+        text: data.mensaje
+    }
+
+    socket.emit("nuevoMensaje", finalData);
 };
