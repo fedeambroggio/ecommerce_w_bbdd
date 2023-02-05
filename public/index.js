@@ -1,3 +1,7 @@
+import {
+    denormalize,
+    schema,
+} from "https://cdn.jsdelivr.net/npm/normalizr@3.6.2/+esm";
 var socket = io();
 
 // PRODUCTOS
@@ -72,37 +76,51 @@ new_product_form.onsubmit = (e) => {
     let data = {};
 
     [...newProductForm.elements].forEach((item) => {
-        if (item.value && item.value !== "")
-            data[item.name] = item.value;
+        if (item.value && item.value !== "") data[item.name] = item.value;
     });
 
-    socket.emit('nuevoProducto', data)
-
-}
+    socket.emit("nuevoProducto", data);
+};
 
 // MENSAJES
 
-socket.on('mensajes', (data) => {
+socket.on("mensajes", (data) => {
     const mensajesContainer = document.querySelector("#mensajes_container");
 
-    if (data.length > 0) {
-        //Si existe algún mensaje
-        let chatHTML = ``;
-
-        data.forEach((el) => {
-            chatHTML += `
-            <p>
-            <span style="color: blue; font-weight: 900">${el.email}</span>
-            <span style="color: brown;">[${el.hora}]: </span>
-            <span style="color: green; font-style: italic;">${el.mensaje}</span>            
-            </p>
-            `;
+    if (data) {
+        const author = new schema.Entity("authors");
+        const messages = new schema.Entity("messages", {
+            author: author,
         });
-
-        mensajesContainer.innerHTML = chatHTML;
-    } else {
-        mensajesContainer.innerHTML = `<p style="color: red; font-size: 20px">Sin mensajes para mostrar</p>`;
+        const denormalizedData = denormalize(
+            data.result,
+            [messages],
+            data.entities
+        );
+        const denormalizedRatio = ((JSON.stringify(denormalizedData).length /JSON.stringify(data).length) *100).toFixed(2);
+    
+        if (denormalizedData.length > 0) {
+            //Si existe algún mensaje
+            let chatHTML = `<h3>Porcentaje denormalizado en relacion al original ${denormalizedRatio}%</h3>`;
+    
+            denormalizedData.forEach((el) => {
+                console.log("el", el._doc)
+                chatHTML += `
+                <p>
+                <span style="color: blue; font-weight: 900">${el._doc.author.id}</span>
+                <span style="color: brown;">[${el._doc.hora}]: </span>
+                <span style="color: green; font-style: italic;">${el._doc.text}</span>            
+                <span><img style="width: 16px; height: auto" src=${el._doc.author.avatar} alt="user"/></span>            
+                </p>
+                `;
+            });
+    
+            mensajesContainer.innerHTML = chatHTML;
+        } else {
+            mensajesContainer.innerHTML = `<p style="color: red; font-size: 20px">Sin mensajes para mostrar</p>`;
+        }
     }
+   
 });
 
 const newMensajeForm = document.getElementById("mensajes_form");
@@ -125,8 +143,8 @@ newMensajeForm.onsubmit = (e) => {
             avatar: data.avatar,
             alias: data.alias,
         },
-        text: data.mensaje
-    }
+        text: data.mensaje,
+    };
 
     socket.emit("nuevoMensaje", finalData);
 };
