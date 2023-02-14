@@ -3,7 +3,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import ClientSQL from './lib/sql.js';
 import { optionsMariaDB } from "./options/MariaDB.js";
-import { optionsSQLite3 } from "./options/SQLite3.js";
 import * as http from 'http';
 import { Server } from "socket.io";
 import { generateRandomProducts } from './lib/generateRandomProducts.js';
@@ -11,18 +10,36 @@ import mongoose from "mongoose";
 import CRUD_MongoDB from "./lib/MongoDBManager.js";
 import { MensajesDAO } from './lib/MensajesDAOMongoDB.js';
 import { normalize, schema } from 'normalizr';
+import session from 'express-session';
+import MongoStore from 'connect-mongo'
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 
 const sql = new ClientSQL(optionsMariaDB, 'productos');
-const sqlite = new ClientSQL(optionsSQLite3, 'mensajes');
+
+const mongoStoreOptions = {
+    mongoUrl: 'mongodb+srv://gt:5318@learningcluster.henetdi.mongodb.net/Auth?retryWrites=true&w=majority',
+    mongoOptions: {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+    }
+  }
 
 // Server config
 app.use(express.json());  // to support JSON-encoded bodies
 app.use(express.urlencoded({ extended: true })); // to support URL-encoded bodies
 app.use(express.static(path.join(__dirname + "/public")))
+app.use(session({
+    store: MongoStore.create(mongoStoreOptions),
+    secret: "secret",
+    resave: true,
+    saveUninitialized: true,
+    cookie: {
+        maxAge: 60 * 10000 //10 minutos
+    }
+}))
 
 // For Socket.io config
 const server = http.createServer(app);
@@ -50,13 +67,66 @@ function connectToMongoDB() {
       })
       .catch((error) => console.error("Error connecting to MongoDB: ", error));
 }
-  
+
+function auth(req, res, next) {
+    if (req.session?.userName) {
+        return next()
+    } else {
+        res.sendFile('login.html', {root: path.join(__dirname, 'public')})
+    }
+}
+
 // ENDPOINTS
-app.get('/', (req, res) => {
-    res.sendFile('index.html', {root: __dirname})
+app.get('/login', (req, res) => {
+    res.sendFile('login.html', {root: path.join(__dirname, 'public')})
 });
 
+app.post('/session-save', (req, res) => {
+    req.session.userName = req.body.userName;
+    res.json({
+        status: 200,
+        data: `Bienvenido ${req.body.userName}`
+    })
+})
+app.post('/session-delete', (req, res) => {
+    const userName = req.session.userName
+    req.session.destroy(err => {
+        if (!err) {
+            res.json({
+                status: 200,
+                data: `Hasta luego ${userName}`
+            })
+        } else {
+            res.json({
+                status: 200,
+                data: `Logout error ${err}`
+            })
+        }
+    })
+    
+})
+app.get('/dashboard', auth, (req, res) => {
+    //Extender la sesión un minuto
+    req.session.cookie.expires = new Date(Date.now() + 60 * 1000);
+    if (req.session) {
+        res.sendFile('index.html', {root: path.join(__dirname, 'public')})
+    } else { 
+        res.sendFile('login.html', {root: path.join(__dirname, 'public')})
+    }
+});
+app.get('/session-info', (req, res) => {
+    /* 
+    Al no usar motores de plantillas no es posible enviar
+    los datos del usuario al frontend sin realizar una
+    llamada aislada    
+    */
+    res.json({ data: req.session.userName })
+})
+
+
 app.get('/api/productos-test', (req, res) => {
+    //Extender la sesión un minuto
+    req.session.cookie.expires = new Date(Date.now() + 60 * 1000);
     const products = generateRandomProducts(5)
     res.json({products})
 });

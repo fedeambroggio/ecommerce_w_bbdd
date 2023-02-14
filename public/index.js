@@ -4,6 +4,62 @@ import {
 } from "https://cdn.jsdelivr.net/npm/normalizr@3.6.2/+esm";
 var socket = io();
 
+let userGreeting = null;
+
+const grettingDiv = document.querySelector("#greeting_div");
+let logOutBtn;
+
+const getSessionInfo = () => {
+    return fetch("/session-info", { method: "GET" })
+            .then((response) => response.json())
+            .then((data) => {
+                userGreeting = `Bienvenido ${data.data}`
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+            });
+}
+getSessionInfo().then(() => {
+    if (userGreeting !== null) {
+        grettingDiv.innerHTML = `
+            <div style="display: flex; justify-content: space-around; align-items: center">
+                <h1 style="color: #4a6d34; margin-right: 16px">${userGreeting}</h1>
+                <button id="logout_btn">Desloguear</button>
+            </div>
+        `
+        logOutBtn = document.querySelector("#logout_btn");
+        logOutBtn.onclick = () => {
+            fetch("/session-delete", { method: "POST" })
+                .then((response) => response.json())
+                .then((data) => {
+                    const documentBody = document.querySelector("body");
+                    documentBody.innerHTML = `
+                    <div style="
+                            width: 500px;
+                            height: auto;
+                            background-color: #8fab7d;
+                            display: flex; 
+                            justify-content: center; 
+                            align-items: center"
+                    >
+                        <h1 style="color: #4a6d34">${data.data}</h1>
+                    </div>
+                    `
+                    setTimeout(() => {
+                        window.location.href = "/login"
+                    }, 2000)
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                });
+        };
+    } else {
+        grettingDiv.innerHTML = `<div style="display: flex; justify-content: space-around; align-items: center">
+                <h1 style="color: #f9f585">Usuario no logueado</h1>
+            </div>`
+    }
+})
+
 // PRODUCTOS
 
 socket.on("productos", (data) => {
@@ -104,7 +160,6 @@ socket.on("mensajes", (data) => {
             let chatHTML = `<h3>Porcentaje denormalizado en relacion al original ${denormalizedRatio}%</h3>`;
     
             denormalizedData.forEach((el) => {
-                console.log("el", el._doc)
                 chatHTML += `
                 <p>
                 <span style="color: blue; font-weight: 900">${el._doc.author.id}</span>
