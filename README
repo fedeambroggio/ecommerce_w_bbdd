@@ -1,3 +1,4 @@
-Initiate mongodb on localhost:27017
+Initiate mongodb on localhost:27017 to use chat and table of products functions
+Session info is being stored on Mongo Atlas Cloud. It will last 10 minutes per user and one extra added every time user performs a request.
 Run `server.js` to initiate server
-Navigate to `localhost:8080` to use app
+Navigate to `localhost:8080/dashboard` to use app
