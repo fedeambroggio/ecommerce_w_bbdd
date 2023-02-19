@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Login</title>
-    </head>
-    <body>
-        <div
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+</head>
+<body>
+    <div
             style="
                 width: 500px;
                 height: auto;
@@ -18,7 +18,7 @@
                 align-items: center;
             "
         >
-            <h1 style="color: blue">Login de usuario</h1>
+            <h1 style="color: blue">Registro de usuario</h1>
             <br />
 
             <form
@@ -28,8 +28,7 @@
                     justify-content: center;
                     align-items: center;
                 "
-                method="post"
-                id="login_form"
+                id="signup_form"
             >
                 <div style="width: 100%">
                     <p style="width: 100px; margin-right: 24px">
@@ -47,8 +46,8 @@
 
                 <button
                     type="submit"
-                    form="login_form"
-                    id="login_button"
+                    form="signup_form"
+                    id="signup_button"
                     style="
                         margin-bottom: 24px;
                         margin-top: 24px;
@@ -60,7 +59,7 @@
                 </button>
             </form>
 
-            <a href="/registro">
+            <a href="/login">
                 <button
                     type="button"
                     style="
@@ -70,10 +69,10 @@
                         border-radius: 12px;
                     "
                 >
-                    Registrarse
+                    Ingresar
                 </button>
             </a>
         </div>
         <script type="module" src="./login.js"></script>
-    </body>
+</body>
 </html>

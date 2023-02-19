@@ -9,10 +9,15 @@ import { generateRandomProducts } from './lib/generateRandomProducts.js';
 import mongoose from "mongoose";
 import CRUD_MongoDB from "./lib/MongoDBManager.js";
 import { MensajesDAO } from './lib/MensajesDAOMongoDB.js';
+import { UsersDAO } from './lib/UsersDAOMongoDB.js';
 import { normalize, schema } from 'normalizr';
 import session from 'express-session';
-import MongoStore from 'connect-mongo'
+import MongoStore from 'connect-mongo';
+import bcrypt from 'bcrypt';
+import passport from 'passport';
+import { Strategy as LocalStrategy } from 'passport-local';
 
+const saltRounds = 10;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
@@ -25,30 +30,12 @@ const mongoStoreOptions = {
         useNewUrlParser: true,
         useUnifiedTopology: true,
     }
-  }
-
-// Server config
-app.use(express.json());  // to support JSON-encoded bodies
-app.use(express.urlencoded({ extended: true })); // to support URL-encoded bodies
-app.use(express.static(path.join(__dirname + "/public")))
-app.use(session({
-    store: MongoStore.create(mongoStoreOptions),
-    secret: "secret",
-    resave: true,
-    saveUninitialized: true,
-    cookie: {
-        maxAge: 60 * 10000 //10 minutos
-    }
-}))
-
-// For Socket.io config
-const server = http.createServer(app);
-const io = new Server(server);
-
+}
+  
 // MongoDB setup
 mongoose.set('strictQuery', false);
 export const mongoConfig = {
-    options: {
+    mongoOptions: {
         useNewUrlParser: true,
         useUnifiedTopology: true,
         maxPoolSize:10,
@@ -57,39 +44,175 @@ export const mongoConfig = {
     mongoUrl: "mongodb://localhost:27017/ecommerce"
 }
 
-let mongoDBMensajesCRUD;
+// Server config
+app.use(express.json());  // to support JSON-encoded bodies
+app.use(express.urlencoded({ extended: true })); // to support URL-encoded bodies
+app.use(express.static(path.join(__dirname + "/public")))
+app.use(session({
+    store: MongoStore.create(mongoConfig),
+    secret: "secret",
+    resave: true,
+    saveUninitialized: true,
+    cookie: {
+        maxAge: 60 * 10000 //10 minutos
+    }
+}))
+app.use(passport.initialize());
+app.use(passport.session());
 
-function connectToMongoDB() {
-    return mongoose.connect(mongoConfig["mongoUrl"], mongoConfig["options"])
+// For Socket.io config
+const server = http.createServer(app);
+const io = new Server(server);
+
+
+
+let mongoDBCollectionCRUD;
+
+function connectToMongoDB(DAO) {
+    return mongoose.connect(mongoConfig["mongoUrl"], mongoConfig["mongoOptions"])
       .then(() => {
-          console.log("MongoDB database connection established successfully!");
-          mongoDBMensajesCRUD = new CRUD_MongoDB(MensajesDAO)
+        //   console.log("MongoDB database connection established successfully!");
+          mongoDBCollectionCRUD = new CRUD_MongoDB(DAO)
       })
       .catch((error) => console.error("Error connecting to MongoDB: ", error));
 }
 
 function auth(req, res, next) {
-    if (req.session?.userName) {
-        return next()
-    } else {
-        res.sendFile('login.html', {root: path.join(__dirname, 'public')})
-    }
+    // Auth with session
+    // if (req.session?.userName) {
+    //     return next()
+    // } else {
+    //     res.sendFile('login.html', {root: path.join(__dirname, 'public')})
+    // }
+    // Auth with passport
+    if (req.isAuthenticated())
+		return next();
+	res.redirect('/login');
 }
 
+function encriptPassword(plainPass) {
+    return bcrypt
+        .genSalt(saltRounds)
+        .then(salt => {
+            return bcrypt.hash(plainPass, salt)
+        })
+        .then(hash => {
+            return hash 
+        })
+        .catch(err => console.error(err.message))
+}
+
+function isValidPassword(password, userPassword) {
+    return bcrypt.compareSync(password, userPassword);
+}  
+
+// Passport init
+// Necesario para persistir sesiones de usuario
+passport.serializeUser(function (user, done) {
+    done(null, user._id);
+});
+passport.deserializeUser(function (id, done) {
+    connectToMongoDB(UsersDAO)
+        .then(async () => {
+            // buscar al usuario
+            const foundUser = await mongoDBCollectionCRUD.read({ _id: id })
+
+            if (foundUser.length !== 0) { 
+                done(null, foundUser[0])
+            } else {
+                done("error")
+            }
+        })
+});
+
+// Login strategy
+passport.use('loginStrategy', new LocalStrategy({
+    usernameField: 'email',
+    passwordField: 'password'
+  },
+    (_email, _password, done) => { 
+        connectToMongoDB(UsersDAO)
+            .then(async () => {
+                // buscar al usuario
+                let foundUser = await mongoDBCollectionCRUD.read({ email: _email })
+
+                if (foundUser.length !== 0) {
+                    // Si el usuario existe, comprobar contraseña
+                    if (!isValidPassword(_password, foundUser[0].password)){
+                        return done(null, false);
+                    } else {
+                        // Si la contraseña es correcta, devolver al usuario
+                        return done(null, foundUser[0]);
+                    }
+                } else {
+                    // Si el usuario no existe, error
+                    return done(null, false)
+                }
+            })
+            .catch((err) => {
+                return done(err);
+            })
+}));
+
+
+
+
+
+
 // ENDPOINTS
+app.get('/registro', (req, res) => {
+    res.sendFile('signup.html', {root: path.join(__dirname, 'public')})
+});
+app.get('/fallo-registro', (req, res) => {
+    res.sendFile('fail_signup.html', {root: path.join(__dirname, 'public')})
+});
+app.post('/registro', (req, res) => {
+    connectToMongoDB(UsersDAO)
+        .then(async () => {
+            let userInfo = {
+                email: req.body.email,
+                password: await encriptPassword(req.body.password)
+            }
+            // buscar al usuario
+            let foundUser = await mongoDBCollectionCRUD.read({ email: req.body.email })
+            if (foundUser.length !== 0) {
+                // Si el usuario existe, redirigir a error
+                res.redirect('/fallo-registro')
+            } else {
+                // Si el usuario no existe, guardarlo y redirigir a login
+                data = await mongoDBCollectionCRUD.create(userInfo)
+                res.redirect('/login')
+            }
+        })
+        .catch((err) => {
+            data = err
+        })
+})
+
+
 app.get('/login', (req, res) => {
     res.sendFile('login.html', {root: path.join(__dirname, 'public')})
 });
+app.get('/fallo-login', (req, res) => {
+    res.sendFile('fail_login.html', {root: path.join(__dirname, 'public')})
+});
+app.post('/login', passport.authenticate('loginStrategy', {
+    successRedirect: '/dashboard',
+    failureRedirect: '/fallo-login',
+}))
 
 app.post('/session-save', (req, res) => {
-    req.session.userName = req.body.userName;
+    req.session.userName = req.body.email;
     res.json({
         status: 200,
-        data: `Bienvenido ${req.body.userName}`
+        data: `Bienvenido ${req.body.email}`
     })
 })
 app.post('/session-delete', (req, res) => {
-    const userName = req.session.userName
+    // UserName session
+    // const userName = req.session.userName
+    // UserName passport
+    const userName = req.user.email
     req.session.destroy(err => {
         if (!err) {
             res.json({
@@ -120,7 +243,10 @@ app.get('/session-info', (req, res) => {
     los datos del usuario al frontend sin realizar una
     llamada aislada    
     */
-    res.json({ data: req.session.userName })
+    // Info ussing session
+    // res.json({ data: req.session.userName })
+    // Info ussing passport
+    res.json({ data: req.user.email })
 })
 
 
@@ -145,7 +271,7 @@ io.on('connection', async (socket) => {
         status = 500
     }
     
-    console.log({ operation: "getAllProducts", status, data })
+    // console.log({ operation: "getAllProducts", status, data })
     socket.emit('productos', data)
 
     socket.on('nuevoProducto', async prod => {
@@ -159,7 +285,7 @@ io.on('connection', async (socket) => {
             status = 500
         }
         
-        console.log({ operation: "addProducts", status, data })
+        // console.log({ operation: "addProducts", status, data })
 
         // Se envían los productos actualizados a los usuarios
         try {
@@ -170,15 +296,15 @@ io.on('connection', async (socket) => {
             status = 500
         }
         
-        console.log({ operation: "getAllProducts", status, data })
+        // console.log({ operation: "getAllProducts", status, data })
 
         io.sockets.emit('productos', data)
     })
     
     // Se envían todos los mensajes al usuario
-    connectToMongoDB()
+    connectToMongoDB(MensajesDAO)
         .then(async () => {
-            data = await mongoDBMensajesCRUD.readMessages()
+            data = await mongoDBCollectionCRUD.readMessages()
             status = 200
         })
         .catch((err) => {
@@ -186,7 +312,7 @@ io.on('connection', async (socket) => {
             data = err
         })
         .finally(() => {
-            console.log({ operation: "getAllMessages", status, data })
+            // console.log({ operation: "getAllMessages", status, data })
 
             const author = new schema.Entity('authors')
             const messages = new schema.Entity('messages', {
@@ -201,9 +327,9 @@ io.on('connection', async (socket) => {
         // Guardar el mensaje recibido
         let data, status;
 
-        await connectToMongoDB()
+        await connectToMongoDB(MensajesDAO)
             .then(() => {
-                data = mongoDBMensajesCRUD.create(msg)
+                data = mongoDBCollectionCRUD.create(msg)
                 status = 200
             })
             .catch((err) => {
@@ -211,14 +337,14 @@ io.on('connection', async (socket) => {
                 data = err
             })
             .finally(() => {
-                console.log({ operation: "addMessage", status, data })
+                // console.log({ operation: "addMessage", status, data })
             })
         
         // Se envían los mensajes actualizados a los usuarios
         // Se envían todos los mensajes al usuario
-        await connectToMongoDB()
+        await connectToMongoDB(MensajesDAO)
             .then(() => {
-                data = mongoDBMensajesCRUD.readMessages()
+                data = mongoDBCollectionCRUD.readMessages()
                 status = 200
                 return data
             })
@@ -235,7 +361,7 @@ io.on('connection', async (socket) => {
                 data = err
             })
             .finally(() => {
-                console.log({ operation: "addMessage", status, data })
+                // console.log({ operation: "addMessage", status, data })
             })
     })
 });
