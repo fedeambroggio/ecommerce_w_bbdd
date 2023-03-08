@@ -16,8 +16,13 @@ import MongoStore from 'connect-mongo';
 import bcrypt from 'bcrypt';
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
+import yargs from 'yargs'
 import * as dotenv from 'dotenv'
 dotenv.config()
+
+const args = yargs(process.argv.slice(2)).default({
+    p: 8080 //Puerto por defecto
+}).argv;
 
 const saltRounds = 10;
 const __filename = fileURLToPath(import.meta.url);
@@ -369,8 +374,8 @@ io.on('connection', async (socket) => {
 });
 
 // SERVER INIT
-server.listen(8080, () => {
-    console.log(`Servidor iniciado en puerto 8080`);
+server.listen(args.p, () => {
+    console.log(`Servidor iniciado en puerto ${server.address().port}`);
 })
 // MANEJO DE ERRORES SERVIDOR
 server.on("error", (e) => console.log(e))
