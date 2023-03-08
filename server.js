@@ -16,6 +16,8 @@ import MongoStore from 'connect-mongo';
 import bcrypt from 'bcrypt';
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
+import * as dotenv from 'dotenv'
+dotenv.config()
 
 const saltRounds = 10;
 const __filename = fileURLToPath(import.meta.url);
@@ -25,7 +27,7 @@ const app = express();
 const sql = new ClientSQL(optionsMariaDB, 'productos');
 
 const mongoStoreOptions = {
-    mongoUrl: 'mongodb+srv://gt:5318@learningcluster.henetdi.mongodb.net/Auth?retryWrites=true&w=majority',
+    mongoUrl: `mongodb+srv://gt:${process.env.MONGO_URL_KEY}@learningcluster.henetdi.mongodb.net/Auth?retryWrites=true&w=majority`,
     mongoOptions: {
         useNewUrlParser: true,
         useUnifiedTopology: true,
@@ -50,7 +52,7 @@ app.use(express.urlencoded({ extended: true })); // to support URL-encoded bodie
 app.use(express.static(path.join(__dirname + "/public")))
 app.use(session({
     store: MongoStore.create(mongoConfig),
-    secret: "secret",
+    secret: process.env.MONGO_STORE_SECRET,
     resave: true,
     saveUninitialized: true,
     cookie: {
