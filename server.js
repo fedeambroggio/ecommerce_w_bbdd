@@ -28,6 +28,7 @@ const saltRounds = 10;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
+const router = express.Router();
 
 const sql = new ClientSQL(optionsMariaDB, 'productos');
 
@@ -267,13 +268,36 @@ app.get('/session-info', (req, res) => {
     res.json({ data: req.user.email })
 })
 
+//API ENDPOINTS
+const generarNumerosAleatorios = (n) => {
+    const numeros = {};
+    for (let i = 0; i < n; i++) {
+      const numero = Math.floor(Math.random() * 1000) + 1;
+      if (numeros[numero]) {
+        numeros[numero]++;
+      } else {
+        numeros[numero] = 1;
+      }
+    }
+    return numeros;
+}
 
-app.get('/api/productos-test', (req, res) => {
-    //Extender la sesión un minuto
-    req.session.cookie.expires = new Date(Date.now() + 60 * 1000);
-    const products = generateRandomProducts(5)
-    res.json({products})
-});
+router.route('/productos-test')
+    .get((req, res) => {
+        //Extender la sesión un minuto
+        req.session.cookie.expires = new Date(Date.now() + 60 * 1000);
+        const products = generateRandomProducts(5)
+        res.json({products})
+    });
+
+router.route('/randoms')
+    .get((req, res) => {
+        const cant = parseInt(req.query.cant) || 100000000;
+        res.json(generarNumerosAleatorios(cant))
+    });
+app.use('/api', router)
+
+
 
 //Socket events
 io.on('connection', async (socket) => {
