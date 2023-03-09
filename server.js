@@ -17,6 +17,7 @@ import bcrypt from 'bcrypt';
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
 import yargs from 'yargs'
+import { fork } from 'child_process';
 import * as dotenv from 'dotenv'
 dotenv.config()
 
@@ -269,19 +270,6 @@ app.get('/session-info', (req, res) => {
 })
 
 //API ENDPOINTS
-const generarNumerosAleatorios = (n) => {
-    const numeros = {};
-    for (let i = 0; i < n; i++) {
-      const numero = Math.floor(Math.random() * 1000) + 1;
-      if (numeros[numero]) {
-        numeros[numero]++;
-      } else {
-        numeros[numero] = 1;
-      }
-    }
-    return numeros;
-}
-
 router.route('/productos-test')
     .get((req, res) => {
         //Extender la sesión un minuto
@@ -293,7 +281,16 @@ router.route('/productos-test')
 router.route('/randoms')
     .get((req, res) => {
         const cant = parseInt(req.query.cant) || 100000000;
-        res.json(generarNumerosAleatorios(cant))
+        const forkedRandomNumberGenerator = fork('./lib/generateRandomNumbers.js')
+
+        forkedRandomNumberGenerator.on("message", (result) => {
+            //handle async ES6 import
+            if (result === "Iniciado") {
+                forkedRandomNumberGenerator.send(cant)
+            } else {
+                res.json(result)
+            }
+        })
     });
 app.use('/api', router)
 
