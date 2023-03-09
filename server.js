@@ -167,6 +167,17 @@ passport.use('loginStrategy', new LocalStrategy({
 
 
 // ENDPOINTS
+app.get('/info', (req, res) => {
+    res.json({
+        argumentosEntrada: args,
+        SO: process.platform,
+        nodeVersion: process.version,
+        reservedMemory: process.memoryUsage()['rss'],
+        excPath: __filename,
+        PID: process.pid,
+        projectDir: process.cwd(),
+    })
+});
 app.get('/registro', (req, res) => {
     res.sendFile('signup.html', {root: path.join(__dirname, 'public')})
 });
