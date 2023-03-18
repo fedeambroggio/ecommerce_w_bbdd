@@ -5,25 +5,15 @@ import ClientSQL from './lib/sql.js';
 import { optionsMariaDB } from "./options/MariaDB.js";
 import * as http from 'http';
 import { Server } from "socket.io";
-import { generateRandomProducts } from './lib/generateRandomProducts.js';
 import mongoose from "mongoose";
 import CRUD_MongoDB from "./lib/MongoDBManager.js";
 import { MensajesDAO } from './lib/MensajesDAOMongoDB.js';
-import { UsersDAO } from './lib/UsersDAOMongoDB.js';
 import { normalize, schema } from 'normalizr';
 import session from 'express-session';
 import MongoStore from 'connect-mongo';
-import bcrypt from 'bcrypt';
 import passport from 'passport';
-import { Strategy as LocalStrategy } from 'passport-local';
-import yargs from 'yargs'
-import { fork } from 'child_process';
 import * as dotenv from 'dotenv'
 dotenv.config()
-
-const args = yargs(process.argv.slice(2)).default({
-    p: 8080 //Puerto por defecto
-}).argv;
 
 const saltRounds = 10;
 const __filename = fileURLToPath(import.meta.url);
@@ -73,8 +63,6 @@ app.use(passport.session());
 const server = http.createServer(app);
 const io = new Server(server);
 
-
-
 let mongoDBCollectionCRUD;
 
 function connectToMongoDB(DAO) {
@@ -85,215 +73,6 @@ function connectToMongoDB(DAO) {
       })
       .catch((error) => console.error("Error connecting to MongoDB: ", error));
 }
-
-function auth(req, res, next) {
-    // Auth with session
-    // if (req.session?.userName) {
-    //     return next()
-    // } else {
-    //     res.sendFile('login.html', {root: path.join(__dirname, 'public')})
-    // }
-    // Auth with passport
-    if (req.isAuthenticated())
-		return next();
-	res.redirect('/login');
-}
-
-function encriptPassword(plainPass) {
-    return bcrypt
-        .genSalt(saltRounds)
-        .then(salt => {
-            return bcrypt.hash(plainPass, salt)
-        })
-        .then(hash => {
-            return hash 
-        })
-        .catch(err => console.error(err.message))
-}
-
-function isValidPassword(password, userPassword) {
-    return bcrypt.compareSync(password, userPassword);
-}  
-
-// Passport init
-// Necesario para persistir sesiones de usuario
-passport.serializeUser(function (user, done) {
-    done(null, user._id);
-});
-passport.deserializeUser(function (id, done) {
-    connectToMongoDB(UsersDAO)
-        .then(async () => {
-            // buscar al usuario
-            const foundUser = await mongoDBCollectionCRUD.read({ _id: id })
-
-            if (foundUser.length !== 0) { 
-                done(null, foundUser[0])
-            } else {
-                done("error")
-            }
-        })
-});
-
-// Login strategy
-passport.use('loginStrategy', new LocalStrategy({
-    usernameField: 'email',
-    passwordField: 'password'
-  },
-    (_email, _password, done) => { 
-        connectToMongoDB(UsersDAO)
-            .then(async () => {
-                // buscar al usuario
-                let foundUser = await mongoDBCollectionCRUD.read({ email: _email })
-
-                if (foundUser.length !== 0) {
-                    // Si el usuario existe, comprobar contraseña
-                    if (!isValidPassword(_password, foundUser[0].password)){
-                        return done(null, false);
-                    } else {
-                        // Si la contraseña es correcta, devolver al usuario
-                        return done(null, foundUser[0]);
-                    }
-                } else {
-                    // Si el usuario no existe, error
-                    return done(null, false)
-                }
-            })
-            .catch((err) => {
-                return done(err);
-            })
-}));
-
-
-
-
-
-
-// ENDPOINTS
-app.get('/info', (req, res) => {
-    res.json({
-        argumentosEntrada: args,
-        SO: process.platform,
-        nodeVersion: process.version,
-        reservedMemory: process.memoryUsage()['rss'],
-        excPath: __filename,
-        PID: process.pid,
-        projectDir: process.cwd(),
-    })
-});
-app.get('/registro', (req, res) => {
-    res.sendFile('signup.html', {root: path.join(__dirname, 'public')})
-});
-app.get('/fallo-registro', (req, res) => {
-    res.sendFile('fail_signup.html', {root: path.join(__dirname, 'public')})
-});
-app.post('/registro', (req, res) => {
-    connectToMongoDB(UsersDAO)
-        .then(async () => {
-            let userInfo = {
-                email: req.body.email,
-                password: await encriptPassword(req.body.password)
-            }
-            // buscar al usuario
-            let foundUser = await mongoDBCollectionCRUD.read({ email: req.body.email })
-            if (foundUser.length !== 0) {
-                // Si el usuario existe, redirigir a error
-                res.redirect('/fallo-registro')
-            } else {
-                // Si el usuario no existe, guardarlo y redirigir a login
-                data = await mongoDBCollectionCRUD.create(userInfo)
-                res.redirect('/login')
-            }
-        })
-        .catch((err) => {
-            data = err
-        })
-})
-
-
-app.get('/login', (req, res) => {
-    res.sendFile('login.html', {root: path.join(__dirname, 'public')})
-});
-app.get('/fallo-login', (req, res) => {
-    res.sendFile('fail_login.html', {root: path.join(__dirname, 'public')})
-});
-app.post('/login', passport.authenticate('loginStrategy', {
-    successRedirect: '/dashboard',
-    failureRedirect: '/fallo-login',
-}))
-
-app.post('/session-save', (req, res) => {
-    req.session.userName = req.body.email;
-    res.json({
-        status: 200,
-        data: `Bienvenido ${req.body.email}`
-    })
-})
-app.post('/session-delete', (req, res) => {
-    // UserName session
-    // const userName = req.session.userName
-    // UserName passport
-    const userName = req.user.email
-    req.session.destroy(err => {
-        if (!err) {
-            res.json({
-                status: 200,
-                data: `Hasta luego ${userName}`
-            })
-        } else {
-            res.json({
-                status: 200,
-                data: `Logout error ${err}`
-            })
-        }
-    })
-    
-})
-app.get('/dashboard', auth, (req, res) => {
-    //Extender la sesión un minuto
-    req.session.cookie.expires = new Date(Date.now() + 60 * 1000);
-    if (req.session) {
-        res.sendFile('index.html', {root: path.join(__dirname, 'public')})
-    } else { 
-        res.sendFile('login.html', {root: path.join(__dirname, 'public')})
-    }
-});
-app.get('/session-info', (req, res) => {
-    /* 
-    Al no usar motores de plantillas no es posible enviar
-    los datos del usuario al frontend sin realizar una
-    llamada aislada    
-    */
-    // Info ussing session
-    // res.json({ data: req.session.userName })
-    // Info ussing passport
-    res.json({ data: req.user.email })
-})
-
-//API ENDPOINTS
-router.route('/productos-test')
-    .get((req, res) => {
-        //Extender la sesión un minuto
-        req.session.cookie.expires = new Date(Date.now() + 60 * 1000);
-        const products = generateRandomProducts(5)
-        res.json({products})
-    });
-
-router.route('/randoms')
-    .get((req, res) => {
-        const cant = parseInt(req.query.cant) || 100000000;
-        const forkedRandomNumberGenerator = fork('./lib/generateRandomNumbers.js')
-
-        forkedRandomNumberGenerator.on("message", (result) => {
-            //handle async ES6 import
-            if (result === "Iniciado") {
-                forkedRandomNumberGenerator.send(cant)
-            } else {
-                res.json(result)
-            }
-        })
-    });
-app.use('/api', router)
-
 
 
 //Socket events
