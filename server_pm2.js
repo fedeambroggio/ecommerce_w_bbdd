@@ -24,14 +24,11 @@ import * as dotenv from 'dotenv'
 dotenv.config()
 
 const DEFAULT_PORT = 8080;
-const DEFAULT_MODE = "FORK";
 const numCPUs = os.cpus().length;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const args = yargs(process.argv.slice(2))
-  .default("p", DEFAULT_PORT)
-  .default("m", DEFAULT_MODE)
-    .argv;
+  .default("p", DEFAULT_PORT).argv;
 
 const saltRounds = 10;
 const app = express();
@@ -58,7 +55,6 @@ export const mongoConfig = {
     },
     mongoUrl: "mongodb://localhost:27017/ecommerce"
 }
-
 
 
 const socketInit = () => {
@@ -279,7 +275,7 @@ const startServer = () => {
     // Server config
     app.use(express.json());  // to support JSON-encoded bodies
     app.use(express.urlencoded({ extended: true })); // to support URL-encoded bodies
-    app.use(express.static(path.join(__dirname + "/public")))
+    //app.use(express.static(path.join(__dirname + "/public")))
     app.use(session({
         store: MongoStore.create(mongoConfig),
         secret: process.env.MONGO_STORE_SECRET,
@@ -296,7 +292,6 @@ const startServer = () => {
     
     // ENDPOINTS
     app.get('/info', (req, res) => {
-        console.log("INFO")
         res.json({
             argumentosEntrada: args,
             SO: process.platform,
@@ -416,44 +411,22 @@ const startServer = () => {
                 if (result === "Iniciado") {
                     forkedRandomNumberGenerator.send(cant)
                 } else {
-                    res.json(result)
+                    res.json({fromNginx: true, port: args.p, ...result})
                 }
             })
         });
     app.use('/api', router)
 
 
-    app.listen(args.p, () => {
-        console.log(`App listening on port ${args.p}`);
+    let server = app.listen(args.p, () => {
+        console.log(`App listening on port ${server.address().port}`);
     });
 
     // socketInit()
 }
 
 
-if (args.m === "CLUSTER") {
-    if (cluster.isMaster) {
-        
-      console.log(`Number of CPUs is ${numCPUs}`);
-      console.log(`Master is running on ${process.pid}`);
-  
-      for (let i = 0; i < numCPUs - 1; i++) {
-        cluster.fork();
-      }
-  
-      cluster.on("online", (worker) => {
-        console.log("Worker " + worker.process.pid + " is online");
-      });
-      cluster.on("exit", (worker) => {
-        console.log(`worker ${worker.process.pid} died. Restarting...`);
-        cluster.fork();
-      });
-    } else {
-      startServer();
-    }
-  } else {
-    startServer();
-  }
+startServer();
 
 
 

@@ -1,6 +1,112 @@
-Initiate mongodb on localhost:27017 to use login, chat and table of products functions
-Authentication and session info is handled passport and will last 10 minutes per user and one extra added every time user performs a request.
-Run `server.js` to initiate server
-Navigate to `localhost:8080/register` to sign up
-Navigate to `localhost:8080/login` to login
-After login you will be redirected to `localhost:8080/dashboard` and be authorized to use app
+# Authentication and session
+Initiate mongodb on localhost:27017 to use login, chat and table of products functions. Authentication and session info is handled passport and will last 10 minutes per user and one extra added every time user performs a request.
+
+ - Run `server.js` to initiate server
+ - Navigate to `localhost:8080/register` to sign up
+ - Navigate to `localhost:8080/login` to login
+ - After login you will be redirected to `localhost:8080/dashboard` and
+   be authorized to use app
+
+# Command list to initiate server in all its variants
+
+  
+
+## Node with different modes
+
+    node server.js // Iniate app with default values (PORT: 8080, MODE:FORK)
+    node server.js -p 8081 -m CLUSTER // Iniate app with args values (PORT: 8081, MODE:CLUSTER)
+
+  
+
+## Forever module
+
+    forever start server.js // Iniate app with default values (PORT: 8080, MODE:FORK)
+    forever start server.js --watch // Iniate app with default values (PORT: 8080, MODE:FORK). Watch mode
+    forever start server.js -p 8081 -m CLUSTER // Iniate app with args values (PORT: 8081, MODE:CLUSTER)
+    
+    forever list
+
+  
+
+## PM2 module
+**Fork mode**
+
+    pm2 start server_pm2.js --name="Server1" // Iniate app with default values (PORT: 8080)
+    pm2 start server_pm2.js --name="Server1" -- -p 8081 // Iniate app with args values (PORT: 8081)
+    pm2 start server_pm2.js --name="Server1" --watch -- -p 8081 // Iniate app with args values (PORT: 8081). Watch mode
+    
+    pm2 stop 0
+    pmm2 delete 0
+
+**Cluster mode (6 cpus)**
+
+    pm2 start server_pm2.js --name="Server1" -i 6 // Iniate app with default values (PORT: 8080)
+    pm2 start server_pm2.js --name="Server1" -i 6 -- -p 8081 // Iniate app with args values (PORT: 8081)
+    pm2 start server_pm2.js --name="Server1" --watch -i 6 -- -p 8081  //Iniate app with args values (PORT: 8081). Watch mode
+    
+    pm2 stop 0
+    pmm2 delete 0
+
+  
+
+# nginx as load balancer
+
+  
+
+Start both processes using:
+
+    node server.js -p 8081 -m CLUSTER
+    noder server.js
+
+This combined with the following nginx.conf will handle /api/randoms requests on port 8081 in CLUSTER mode using native cluster module and the remaining requests on port 8080 in FORK mode.
+
+```
+upstream node_app_8081 {
+	server 127.0.0.1:8081;
+}
+upstream node_app_8080 {
+	server 127.0.0.1:8080;
+}
+
+server {
+	listen 80;
+	server_name nginx_node;
+	root ../nginxNode/public;
+
+	location /api/randoms {
+		proxy_pass http://node_app_8081;
+	}
+
+	location / {
+		proxy_pass http://node_app_8080;
+	}
+
+	# redirect server error pages to the static page /50x.html
+	error_page 500 502 503 504 /50x.html;
+	location = /50x.html {
+		root html;
+	}
+}
+
+```
+
+  
+
+By modifiying the following configuration, you will get a cluster handled by nginx:
+```
+upstream node_app_randoms {
+	server 127.0.0.1:8082;
+	server 127.0.0.1:8083;
+	server 127.0.0.1:8084;
+	server 127.0.0.1:8085;
+}
+```
+
+  
+
+remember to initiate each server instance by runniing:
+
+    node server.js -p 8082
+    node server.js -p 8083
+    node server.js -p 8084
+    node server.js -p 8085
