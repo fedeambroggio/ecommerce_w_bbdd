@@ -1,3 +1,13 @@
+# Logs, debug, profilling
+
+## bytes sended over /info route
+With small amount of data transfered this was the result
+ - Without gzip compression: 562b
+ - With gzip compression: 584b
+With more amount of data transfered this was the result
+ - Without gzip compression: 12,6kb
+ - With gzip compression: 605b
+
 # Authentication and session
 Initiate mongodb on localhost:27017 to use login, chat and table of products functions. Authentication and session info is handled passport and will last 10 minutes per user and one extra added every time user performs a request.
 
