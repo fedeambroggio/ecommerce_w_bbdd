@@ -21,6 +21,8 @@ import { fork } from 'child_process';
 import os from 'os';
 import cluster from 'cluster';
 import * as dotenv from 'dotenv'
+import compression from 'compression';
+import logger from './config/logger.js';
 dotenv.config()
 
 const DEFAULT_PORT = 8080;
@@ -32,7 +34,7 @@ const args = yargs(process.argv.slice(2))
   .default("p", DEFAULT_PORT)
   .default("m", DEFAULT_MODE)
     .argv;
-
+const gzipMiddleware = compression();
 const saltRounds = 10;
 const app = express();
 const router = express.Router();
@@ -68,7 +70,7 @@ const socketInit = () => {
 
     //Socket events
     io.on('connection', async (socket) => {
-        console.log('Se ha conectado un usuario');
+        logger.log({level: "info", message: "Se ha conectado un usuario"})
 
         let data, status;
         // Se envían todos los productos al usuario
@@ -76,6 +78,7 @@ const socketInit = () => {
             data = await sql.getAllProducts();
             status = 200
         } catch (err) {
+            logger.log("error", `Error al obtener los productos: ${err}`);
             data = err;
             status = 500
         }
@@ -90,6 +93,7 @@ const socketInit = () => {
                 data = await sql.addProducts(prod)
                 status = 200
             } catch (err) {
+                logger.log("error", `Error al agregar el producto: ${err}`);
                 data = err;
                 status = 500
             }
@@ -101,6 +105,7 @@ const socketInit = () => {
                 data = await sql.getAllProducts();
                 status = 200
             } catch (err) {
+                logger.log("error", `Error al obtener los productos: ${err}`);
                 data = err;
                 status = 500
             }
@@ -119,6 +124,7 @@ const socketInit = () => {
             .catch((err) => {
                 status = 500
                 data = err
+                logger.log("error", `Error al obtener los mensajes: ${err}`);
             })
             .finally(() => {
                 // console.log({ operation: "getAllMessages", status, data })
@@ -144,6 +150,7 @@ const socketInit = () => {
                 .catch((err) => {
                     status = 500
                     data = err
+                    logger.log("error", `Error al agregar el mensaje: ${err}`);
                 })
                 .finally(() => {
                     // console.log({ operation: "addMessage", status, data })
@@ -168,6 +175,7 @@ const socketInit = () => {
                 .catch((err) => {
                     status = 500
                     data = err
+                    logger.log("error", `Error al obtener y enviar los mensajes: ${err}`);
                 })
                 .finally(() => {
                     // console.log({ operation: "addMessage", status, data })
@@ -192,10 +200,11 @@ function connectToMongoDB(DAO) {
         //   console.log("MongoDB database connection established successfully!");
           mongoDBCollectionCRUD = new CRUD_MongoDB(DAO)
       })
-      .catch((error) => console.error("Error connecting to MongoDB: ", error));
+      .catch((error) => logger.log("error", `Error al conectarse con MongoDB: ${error}`));
 }
 
 function auth(req, res, next) {
+    logger.log({level: "info", message: "Checking if user isAuthenticated"})
     // Auth with session
     // if (req.session?.userName) {
     //     return next()
@@ -209,6 +218,7 @@ function auth(req, res, next) {
 }
 
 function encriptPassword(plainPass) {
+    logger.log({level: "info", message: "Encrypting password"})
     return bcrypt
         .genSalt(saltRounds)
         .then(salt => {
@@ -217,10 +227,11 @@ function encriptPassword(plainPass) {
         .then(hash => {
             return hash 
         })
-        .catch(err => console.error(err.message))
+        .catch(err => logger.log("error", `Error al encriptar las contraseña: ${err}`))
 }
 
 function isValidPassword(password, userPassword) {
+    logger.log({level: "info", message: "Validating password"})
     return bcrypt.compareSync(password, userPassword);
 }  
 
@@ -274,7 +285,7 @@ passport.use('loginStrategy', new LocalStrategy({
 
 const startServer = () => {
     const app = express();
-    console.log(`Worker ${process.pid} started`);
+    logger.log({level: "info", message: `Worker ${process.pid} started`})
 
     // Server config
     app.use(express.json());  // to support JSON-encoded bodies
@@ -291,12 +302,27 @@ const startServer = () => {
     }))
     app.use(passport.initialize());
     app.use(passport.session());
+    // app.use(compression()); Use this if you want to compress all responses
 
 
     
     // ENDPOINTS
+
     app.get('/info', (req, res) => {
-        console.log("INFO")
+        logger.log({level: "info", message: "Request [GET] to /info"})
+        res.json({
+            argumentosEntrada: args,
+            SO: process.platform,
+            nodeVersion: process.version,
+            reservedMemory: process.memoryUsage()['rss'],
+            excPath: __filename,
+            PID: process.pid,
+            projectDir: process.cwd(),
+            numCPUs: numCPUs,
+        })
+    });
+    app.get('/info-gzip', gzipMiddleware, (req, res) => {
+        logger.log({level: "info", message: "Request [GET] to /info-gzip"})
         res.json({
             argumentosEntrada: args,
             SO: process.platform,
@@ -309,12 +335,15 @@ const startServer = () => {
         })
     });
     app.get('/registro', (req, res) => {
+        logger.log({level: "info", message: "Request [GET] to /registro"})
         res.sendFile('signup.html', {root: path.join(__dirname, 'public')})
     });
     app.get('/fallo-registro', (req, res) => {
+        logger.log({level: "info", message: "Request [GET] to /fallo-registro"})
         res.sendFile('fail_signup.html', {root: path.join(__dirname, 'public')})
     });
     app.post('/registro', (req, res) => {
+        logger.log({level: "info", message: "Request [POST] to /registro"})
         connectToMongoDB(UsersDAO)
             .then(async () => {
                 let userInfo = {
@@ -339,9 +368,11 @@ const startServer = () => {
 
 
     app.get('/login', (req, res) => {
+        logger.log({level: "info", message: "Request [GET] to /login"})
         res.sendFile('login.html', {root: path.join(__dirname, 'public')})
     });
     app.get('/fallo-login', (req, res) => {
+        logger.log({level: "info", message: "Request [GET] to /fallo-login"})
         res.sendFile('fail_login.html', {root: path.join(__dirname, 'public')})
     });
     app.post('/login', passport.authenticate('loginStrategy', {
@@ -350,6 +381,7 @@ const startServer = () => {
     }))
 
     app.post('/session-save', (req, res) => {
+        logger.log({level: "info", message: "Request [POST] to /session-save"})
         req.session.userName = req.body.email;
         res.json({
             status: 200,
@@ -357,6 +389,7 @@ const startServer = () => {
         })
     })
     app.post('/session-delete', (req, res) => {
+        logger.log({level: "info", message: "Request [POST] to /session-delete"})
         // UserName session
         // const userName = req.session.userName
         // UserName passport
@@ -377,6 +410,7 @@ const startServer = () => {
         
     })
     app.get('/dashboard', auth, (req, res) => {
+        logger.log({level: "info", message: "Request [GET] to /dashboard"})
         //Extender la sesión un minuto
         req.session.cookie.expires = new Date(Date.now() + 60 * 1000);
         if (req.session) {
@@ -386,6 +420,7 @@ const startServer = () => {
         }
     });
     app.get('/session-info', (req, res) => {
+        logger.log({level: "info", message: "Request [GET] to /session-info"})
         /* 
         Al no usar motores de plantillas no es posible enviar
         los datos del usuario al frontend sin realizar una
@@ -400,6 +435,7 @@ const startServer = () => {
     //API ENDPOINTS
     router.route('/productos-test')
         .get((req, res) => {
+            logger.log({level: "info", message: "Request [GET] to /productos-test"})
             //Extender la sesión un minuto
             req.session.cookie.expires = new Date(Date.now() + 60 * 1000);
             const products = generateRandomProducts(5)
@@ -408,6 +444,7 @@ const startServer = () => {
 
     router.route('/randoms')
         .get((req, res) => {
+            logger.log({level: "info", message: "Request [GET] to /randoms"})
             const cant = parseInt(req.query.cant) || 100000000;
             const forkedRandomNumberGenerator = fork('./lib/generateRandomNumbers.js')
 
@@ -423,9 +460,17 @@ const startServer = () => {
     app.use('/api', router)
 
 
-    app.listen(args.p, () => {
-        console.log(`App listening on port ${args.p}`);
+    app.get("*", (req, res) => {
+        logger.log("warn", `Ruta no encontrada ${req.url}`);
+        res.status(404).send(`Ruta no encontrada ${req.url}`);
+    })
+
+    const server = app.listen(args.p, () => {
+        logger.log("info", `App listening on port ${args.p}`);
     });
+    server.on("error", (err) => {
+        logger.log("error", `Error al iniciar el servidor ${err}`);
+    })
 
     // socketInit()
 }
@@ -434,18 +479,17 @@ const startServer = () => {
 if (args.m === "CLUSTER") {
     if (cluster.isMaster) {
         
-      console.log(`Number of CPUs is ${numCPUs}`);
-      console.log(`Master is running on ${process.pid}`);
+      logger.log({level: "info", message: `Master is running on ${process.pid}`})
   
       for (let i = 0; i < numCPUs - 1; i++) {
         cluster.fork();
       }
   
       cluster.on("online", (worker) => {
-        console.log("Worker " + worker.process.pid + " is online");
+        logger.log({level: "info", message: "Worker " + worker.process.pid + " is online"})
       });
       cluster.on("exit", (worker) => {
-        console.log(`worker ${worker.process.pid} died. Restarting...`);
+        logger.log({level: "info", message: `Worker ${worker.process.pid} died. Restarting...`})
         cluster.fork();
       });
     } else {
