@@ -5,11 +5,14 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node tests/benchmark.js",
+    "profiling": "0x -o server.js",
+    "start": "node server.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "autocannon": "^7.10.0",
     "bcrypt": "^5.1.0",
     "compression": "^1.7.4",
     "connect-mongo": "^4.6.0",

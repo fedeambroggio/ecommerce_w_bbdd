@@ -309,7 +309,30 @@ const startServer = () => {
     // ENDPOINTS
 
     app.get('/info', (req, res) => {
-        logger.log({level: "info", message: "Request [GET] to /info"})
+        logger.log({ level: "info", message: "Request [GET] to /info" })
+        res.json({
+            argumentosEntrada: args,
+            SO: process.platform,
+            nodeVersion: process.version,
+            reservedMemory: process.memoryUsage()['rss'],
+            excPath: __filename,
+            PID: process.pid,
+            projectDir: process.cwd(),
+            numCPUs: numCPUs,
+        })
+    });
+    app.get('/info-log', (req, res) => {
+        logger.log({ level: "info", message: "Request [GET] to /info" })
+        console.log({
+            argumentosEntrada: args,
+            SO: process.platform,
+            nodeVersion: process.version,
+            reservedMemory: process.memoryUsage()['rss'],
+            excPath: __filename,
+            PID: process.pid,
+            projectDir: process.cwd(),
+            numCPUs: numCPUs,
+        })
         res.json({
             argumentosEntrada: args,
             SO: process.platform,
@@ -460,10 +483,10 @@ const startServer = () => {
     app.use('/api', router)
 
 
-    app.get("*", (req, res) => {
-        logger.log("warn", `Ruta no encontrada ${req.url}`);
-        res.status(404).send(`Ruta no encontrada ${req.url}`);
-    })
+    // app.get("*", (req, res) => {
+    //     logger.log("warn", `Ruta no encontrada ${req.url}`);
+    //     res.status(404).send(`Ruta no encontrada ${req.url}`);
+    // })
 
     const server = app.listen(args.p, () => {
         logger.log("info", `App listening on port ${args.p}`);

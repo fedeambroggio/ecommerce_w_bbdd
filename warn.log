@@ -1,2 +1,4 @@
 {"level":"warn","message":"Ruta no encontrada /registro_personal","timestamp":"2023-03-24T18:42:13.505Z"}
 {"level":"error","message":"Error al iniciar el servidor Error: listen EADDRINUSE: address already in use :::8080","timestamp":"2023-03-24T18:48:57.361Z"}
+{"level":"warn","message":"Ruta no encontrada /style.css","timestamp":"2023-03-24T21:11:49.430Z"}
+{"level":"warn","message":"Ruta no encontrada /socket.io/socket.io.js","timestamp":"2023-03-24T21:11:49.446Z"}
