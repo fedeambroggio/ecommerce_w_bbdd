@@ -48,7 +48,8 @@ const mongoStoreOptions = {
         useUnifiedTopology: true,
     }
 }
-  
+
+logger.log("info", `MONGO_URL_KEY: ${process.env.MONGO_URL_KEY}`)
 // MongoDB setup
 mongoose.set('strictQuery', false);
 export const mongoConfig = {
@@ -57,9 +58,9 @@ export const mongoConfig = {
         useUnifiedTopology: true,
         maxPoolSize:10,
         wtimeoutMS:2500
-    },
-    mongoUrl: `mongodb+srv://gt:${process.env.MONGO_URL_KEY}@learningcluster.henetdi.mongodb.net/ecommerce?retryWrites=true&w=majority`,
-    }
+      },
+    mongoUrl: `mongodb+srv://gt:${5318}@learningcluster.henetdi.mongodb.net/ecommerce?retryWrites=true&w=majority`,
+    } 
 
 
 
@@ -197,8 +198,7 @@ let mongoDBCollectionCRUD;
 function connectToMongoDB(DAO) {
     return mongoose.connect(mongoConfig["mongoUrl"], mongoConfig["mongoOptions"])
       .then(() => {
-        //   console.log("MongoDB database connection established successfully!");
-          mongoDBCollectionCRUD = new CRUD_MongoDB(DAO)
+        mongoDBCollectionCRUD = new CRUD_MongoDB(DAO)
       })
       .catch((error) => logger.log("error", `Error al conectarse con MongoDB: ${error}`));
 }
