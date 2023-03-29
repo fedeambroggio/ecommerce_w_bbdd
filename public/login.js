@@ -11,7 +11,7 @@ if (signupForm) {
             if (item.value && item.value !== "") data[item.name] = item.value;
         });
     
-        fetch("http://localhost:8080/registro", {
+        fetch("/registro", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -46,7 +46,7 @@ if (loginForm) {
             if (item.value && item.value !== "") data[item.name] = item.value;
         });
     
-        fetch("http://localhost:8080/login", {
+        fetch("/login", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
