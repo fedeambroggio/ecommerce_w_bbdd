@@ -385,7 +385,7 @@ const startServer = () => {
                 }
             })
             .catch((err) => {
-                data = err
+                logger.log({level: "warn", message: `Falló el registro de usuario ${err}`})
             })
     })
 
