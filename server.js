@@ -49,7 +49,6 @@ const mongoStoreOptions = {
     }
 }
 
-logger.log("info", `MONGO_URL_KEY: ${process.env.MONGO_URL_KEY}`)
 // MongoDB setup
 mongoose.set('strictQuery', false);
 export const mongoConfig = {
@@ -59,7 +58,7 @@ export const mongoConfig = {
         maxPoolSize:10,
         wtimeoutMS:2500
       },
-    mongoUrl: `mongodb+srv://gt:${5318}@learningcluster.henetdi.mongodb.net/ecommerce?retryWrites=true&w=majority`,
+    mongoUrl: `mongodb+srv://gt:${process.env.MONGO_URL_KEY}@learningcluster.henetdi.mongodb.net/ecommerce?retryWrites=true&w=majority`,
     } 
 
 
@@ -380,7 +379,7 @@ const startServer = () => {
                     res.redirect('/fallo-registro')
                 } else {
                     // Si el usuario no existe, guardarlo y redirigir a login
-                    data = await mongoDBCollectionCRUD.create(userInfo)
+                    await mongoDBCollectionCRUD.create(userInfo)
                     res.redirect('/login')
                 }
             })
