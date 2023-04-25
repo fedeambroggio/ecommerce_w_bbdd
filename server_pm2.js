@@ -53,7 +53,7 @@ export const mongoConfig = {
         maxPoolSize:10,
         wtimeoutMS:2500
     },
-    mongoUrl: "mongodb://localhost:27017/ecommerce"
+    mongoUrl: "mongodb://localhost:27017/Ecommerce"
 }
 
 

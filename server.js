@@ -13,6 +13,8 @@ import authRouter from "./routes/auth.routes.js";
 import appRouter from "./routes/app.routes.js";
 import apiRouter from "./routes/api.routes.js";
 import sessionRouter from "./routes/session.routes.js";
+import productosRouter from "./routes/productos.routes.js";
+import mensajesRouter from "./routes/mensajes.routes.js";
 
 import connectDatabase from "./database/index.js";
 import {initPassport} from "./middleware/passport.js";
@@ -50,11 +52,18 @@ const startServer = () => {
     app.use(passport.session());
     app.use(compression()); //Use this if you want to compress all responses
 
+    // app.use((req, res, next) => {
+    //     logger.log({level: "info", message: `Received ${req.method} request to ${req.path}`})
+    //     next();
+    // });
+
     //Routes
     app.use("/", authRouter);
     app.use("/", appRouter);
     app.use("/", sessionRouter);
     app.use("/api", apiRouter);
+    app.use("/api/productos", productosRouter);
+    app.use("/api/mensajes", mensajesRouter);
 
     const server = app.listen(args.p, () => {
         logger.log("info", `App listening on port ${args.p}`);

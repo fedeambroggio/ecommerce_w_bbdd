@@ -8,6 +8,6 @@ const appRouter = Router();
 
 appRouter.get("/", authMiddleware, getDashboardPage);
 //TEST
-//appRouter.get("/", getDashboardPage);
+// appRouter.get("/", getDashboardPage);
 
 export default appRouter;

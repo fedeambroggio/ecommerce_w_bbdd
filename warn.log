@@ -2,3 +2,8 @@
 {"level":"error","message":"Error al iniciar el servidor Error: listen EADDRINUSE: address already in use :::8080","timestamp":"2023-03-24T18:48:57.361Z"}
 {"level":"warn","message":"Ruta no encontrada /style.css","timestamp":"2023-03-24T21:11:49.430Z"}
 {"level":"warn","message":"Ruta no encontrada /socket.io/socket.io.js","timestamp":"2023-03-24T21:11:49.446Z"}
+{"level":"warn","message":"Error in SignUp: TypeError: UserSchema is not a constructor","timestamp":"2023-04-24T21:02:13.050Z"}
+{"level":"warn","message":"Error in SignUp: MongoServerError: db already exists with different case already have: [Ecommerce] trying to create [ecommerce]","timestamp":"2023-04-24T21:04:02.456Z"}
+{"level":"warn","message":"Error en el ingreso: undefined","timestamp":"2023-04-24T21:25:32.867Z"}
+{"level":"warn","message":"Error en el ingreso: undefined","timestamp":"2023-04-24T22:07:32.646Z"}
+{"level":"warn","message":"Error en el ingreso: undefined","timestamp":"2023-04-24T22:08:29.610Z"}

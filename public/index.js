@@ -126,17 +126,30 @@ btnGetTestProducts.onclick = () => {
         });
 };
 
-// new_product_form.onsubmit = (e) => {
-//     e.preventDefault();
+new_product_form.onsubmit = (e) => {
+    e.preventDefault();
 
-//     let data = {};
+    let data = {};
 
-//     [...newProductForm.elements].forEach((item) => {
-//         if (item.value && item.value !== "") data[item.name] = item.value;
-//     });
+    [...newProductForm.elements].forEach((item) => {
+        if (item.value && item.value !== "") data[item.name] = item.value;
+    });
 
-//     socket.emit("nuevoProducto", data);
-// };
+    // socket.emit("nuevoProducto", data);
+
+    fetch("/api/productos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+            console.log("data", data)
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+        });
+};
 
 // // MENSAJES
 
@@ -178,28 +191,29 @@ btnGetTestProducts.onclick = () => {
    
 // });
 
-// const newMensajeForm = document.getElementById("mensajes_form");
+const newMensajeForm = document.getElementById("mensajes_form");
 
-// newMensajeForm.onsubmit = (e) => {
-//     e.preventDefault();
+newMensajeForm.onsubmit = (e) => {
+    e.preventDefault();
 
-//     let data = {};
+    let data = {};
 
-//     [...newMensajeForm.elements].forEach((item) => {
-//         if (item.value && item.value !== "") data[item.name] = item.value;
-//     });
+    [...newMensajeForm.elements].forEach((item) => {
+        if (item.value && item.value !== "") data[item.name] = item.value;
+    });
 
-//     const finalData = {
-//         author: {
-//             id: data.email,
-//             nombre: data.nombre,
-//             apellido: data.apellido,
-//             edad: data.edad,
-//             avatar: data.avatar,
-//             alias: data.alias,
-//         },
-//         text: data.mensaje,
-//     };
+    // socket.emit("nuevoMensaje", finalData);
 
-//     socket.emit("nuevoMensaje", finalData);
-// };
+    fetch("/api/mensajes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+            console.log("data", data)
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+        });
+};

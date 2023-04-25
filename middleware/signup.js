@@ -14,7 +14,10 @@ export const signup = (passport) => {
                 usernameField: "email", // Cambia el campo "username" a "email"
             },
             function (req, email, password, done) {
-                findOrCreateUser = function () {
+                console.log("req", req.body)
+                console.log("email", email)
+                console.log("repasswordq", password)
+                const findOrCreateUser = () => {
                     // Find a user in Mongo with provided username
                     UserModel.findOne({ email: email })
                         .then(function (user) {
@@ -22,7 +25,7 @@ export const signup = (passport) => {
                                 logger.log({level: "info", message: `User already exists: ${user}`})
                                 return done(null, false);
                             } else {
-                                var newUser = new UserSchema({
+                                var newUser = new UserModel({
                                     email: email,
                                     password: createHash(password),
                                     name: req.body["name"],
@@ -34,10 +37,13 @@ export const signup = (passport) => {
                                 
                                 return newUser.save()
                                     .then((newUser) => {
-                                        
-                                        logger.log({level: "info", message: `User saved succesfully: ${newUser}`})
-                                
-                                     });
+                                        logger.log({level: "info", message: `User saved successfully: ${newUser}`})
+                                        return done(null, newUser); // Retornar el nuevo usuario autenticado
+                                    })
+                                    .catch((err) => {
+                                        logger.log({level: "error", message: `Error in SignUp: ${err}`})
+                                        return done(err);
+                                    });
                             }
                         })
                         .catch(function (err) {
