@@ -9,12 +9,15 @@ export class ProductosMongoDAO {
     }
 
     async findById(id) {
-        const prod = ProductosModel.findById(id);
-        return new ProductosDTO(prod.nombre, prod.descripcion, prod.codigo, prod.foto, prod.precio, prod.stock)
+        const prod = await ProductosModel.find({ _id: id });
+        if (!prod) {
+            return null;
+        }
+        return new ProductosDTO(prod[0].nombre, prod[0].descripcion, prod[0].codigo, prod[0].foto, prod[0].precio, prod[0].stock)
     }
 
     async find(query) {
-        const productos = ProductosModel.find(query);
+        const productos = await ProductosModel.find(query);
         const productosDTO = productos.map(prod => {
             return new ProductosDTO(prod.nombre, prod.descripcion, prod.codigo, prod.foto, prod.precio, prod.stock)
         })

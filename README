@@ -1,3 +1,7 @@
+# Run test commands
+ - `npm run test-manual` to run manual written test
+ - `npm run test` to run tests made with mocha,chai and supertest
+
 # Logs, debug, profilling
 
 ## bytes sended over /info route

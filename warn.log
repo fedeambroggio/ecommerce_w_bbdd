@@ -7,3 +7,6 @@
 {"level":"warn","message":"Error en el ingreso: undefined","timestamp":"2023-04-24T21:25:32.867Z"}
 {"level":"warn","message":"Error en el ingreso: undefined","timestamp":"2023-04-24T22:07:32.646Z"}
 {"level":"warn","message":"Error en el ingreso: undefined","timestamp":"2023-04-24T22:08:29.610Z"}
+{"level":"error","message":"Error al iniciar el servidor Error: listen EADDRINUSE: address already in use :::8080","timestamp":"2023-04-30T20:16:46.776Z"}
+{"level":"error","message":"Error al iniciar el servidor Error: listen EADDRINUSE: address already in use :::8080","timestamp":"2023-04-30T20:17:21.071Z"}
+{"level":"error","message":"Error al iniciar el servidor Error: listen EADDRINUSE: address already in use :::8080","timestamp":"2023-04-30T20:17:54.050Z"}

@@ -103,3 +103,5 @@ if (args.m === "CLUSTER") {
 } else {
     startServer();
 }
+
+export { startServer };

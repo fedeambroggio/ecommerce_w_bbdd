@@ -5,7 +5,9 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "test": "node tests/benchmark.js",
+    "test-app": "node tests/benchmark.js",
+    "test": "mocha test/productos.test.js",
+    "test-manual": "node test/productos.manual.test.js",
     "profiling": "0x -o server.js",
     "start": "node server.js"
   },
@@ -33,6 +35,11 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^7.6.0",
-    "@types/node": "^18.11.18"
+    "@types/node": "^18.11.18",
+    "axios": "^1.4.0",
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
+    "nodemon": "^2.0.22",
+    "supertest": "^6.3.3"
   }
 }
