@@ -1,3 +1,56 @@
+# GraphiQL test queries
+
+```
+    query {
+    getAllProducts {
+        id,
+        nombre,
+        codigo
+    }
+    }
+
+    query {
+    getAllProducts(campo: "_id", valor: "6433055d48b6d2a94a7a6ea8") {
+        id,
+        nombre, 
+        codigo
+    }
+    }
+
+    query {
+    getProductById(id: "6459760b518dbad862165fa4") {
+        id,
+        nombre,
+        codigo
+    }
+    }
+
+
+    mutation {
+    addProduct(data: {nombre: "Camiseta Argentina", descripcion: "Tres estrellas", codigo: "ARG022", foto:"https://cdn.shopify.com/s/files/1/0750/9167/3364/products/WhatsAppImage2023-03-06at06.21.48_1024x1024@2x.jpg?v=1682118375", precio: 20000, stock:5}) {
+        id
+    }
+    }
+
+    mutation {
+    deleteProductById(id: "64597832bed51f75ef9f08b2") {
+        id,
+        nombre,
+        codigo
+    }
+    }
+
+    mutation {
+    modifyProductById(id: "64597bbef92c9ab2ff2d52ef", data: {nombre: "Camiseta Argentina", descripcion: "Tres estrellas", codigo: "ARG022", foto:"https://cdn.shopify.com/s/files/1/0750/9167/3364/products/WhatsAppImage2023-03-06at06.21.48_1024x1024@2x.jpg?v=1682118375", precio: 22000, stock:10}) {
+        id,
+        nombre,
+        codigo,
+        precio,
+        stock
+    }
+    }
+```
+
 # Run test commands
  - `npm run test-manual` to run manual written test
  - `npm run test` to run tests made with mocha,chai and supertest

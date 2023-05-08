@@ -1,3 +1,5 @@
+// TODO: DAO y DTO en carpetas con ese nombre para respetar convención
+
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -62,7 +64,8 @@ const startServer = () => {
     app.use("/", appRouter);
     app.use("/", sessionRouter);
     app.use("/api", apiRouter);
-    app.use("/api/productos", productosRouter);
+    // app.use("/api/productos", productosRouter);
+    app.use("/graphql", productosRouter);
     app.use("/api/mensajes", mensajesRouter);
 
     const server = app.listen(args.p, () => {
