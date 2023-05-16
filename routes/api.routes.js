@@ -1,11 +1,12 @@
-import { Router } from "express";
+import Router from 'koa-router';
 import {
     getInfo,
     getInfoLog,
     getRandoms,
     getProductsTest
 } from "../controller/api.controller.js";
-const apiRouter = Router();
+
+const apiRouter = new Router();
 
 apiRouter.get("/info", getInfo);
 apiRouter.get("/info-log", getInfoLog);

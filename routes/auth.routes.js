@@ -1,4 +1,4 @@
-import { Router } from "express";
+import Router from 'koa-router';
 import {
     getLoginPage,
     getLoginFailPage,
@@ -7,7 +7,8 @@ import {
     postLogin,
     postSignUp
 } from "../controller/auth.controller.js";
-const authRouter = Router();
+
+const authRouter = new Router();
 
 authRouter.get("/login", getLoginPage);
 authRouter.get("/fallo-login", getLoginFailPage);

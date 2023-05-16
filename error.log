@@ -2,3 +2,4 @@
 {"level":"error","message":"Error al iniciar el servidor Error: listen EADDRINUSE: address already in use :::8080","timestamp":"2023-04-30T20:16:46.776Z"}
 {"level":"error","message":"Error al iniciar el servidor Error: listen EADDRINUSE: address already in use :::8080","timestamp":"2023-04-30T20:17:21.071Z"}
 {"level":"error","message":"Error al iniciar el servidor Error: listen EADDRINUSE: address already in use :::8080","timestamp":"2023-04-30T20:17:54.050Z"}
+{"level":"error","message":"Error in SignUp: RangeError: Maximum call stack size exceeded","timestamp":"2023-05-16T22:02:50.390Z"}

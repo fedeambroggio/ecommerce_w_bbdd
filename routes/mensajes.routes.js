@@ -1,9 +1,10 @@
-import { Router } from "express";
+import Router from 'koa-router';
 import {
     getAllMessages,
     addMessage
 } from "../controller/mensajes.controller.js";
-const mensajesRouter = Router();
+
+const mensajesRouter = new Router();
 
 mensajesRouter.get("/", getAllMessages);
 mensajesRouter.post("/", addMessage);

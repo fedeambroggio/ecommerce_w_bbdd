@@ -1,34 +1,35 @@
-import {logger} from '../utils/logger.js'
+import { logger } from '../utils/logger.js';
 
-export const getSessionInfo = async (req, res) => {
-    logger.log({level: "info", message: "Request [GET] to /session-info"})
-    // Info ussing session
-    // res.json({ data: req.session.userName })
-    // Info ussing passport
-    res.json({ data: req.user.email })
+export const getSessionInfo = async (ctx) => {
+  logger.log({ level: "info", message: "Request [GET] to /session-info" });
+  // Info using session
+  // ctx.body = { data: ctx.session.userName };
+  // Info using passport
+  ctx.body = { data: ctx.state.user.email };
 };
-export const saveSession = async (req, res) => {
-    logger.log({level: "info", message: "Request [POST] to /session-save"})
-    req.session.userName = req.body.email;
-    res.json({
-        status: 200,
-        data: `Bienvenido ${req.body.email}`
-    })
+
+export const saveSession = async (ctx) => {
+  logger.log({ level: "info", message: "Request [POST] to /session-save" });
+  ctx.session.userName = ctx.request.body.email;
+  ctx.body = {
+    status: 200,
+    data: `Bienvenido ${ctx.request.body.email}`,
+  };
 };
-export const deleteSession = async (req, res) => {
-    logger.log({level: "info", message: "Request [POST] to /session-delete"})
-    const userName = req.user.email
-    req.session.destroy(err => {
-        if (!err) {
-            res.json({
-                status: 200,
-                data: `Hasta luego ${userName}`
-            })
-        } else {
-            res.json({
-                status: 200,
-                data: `Logout error ${err}`
-            })
-        }
-    })
+
+export const deleteSession = async (ctx) => {
+  logger.log({ level: "info", message: "Request [POST] to /session-delete" });
+  const userName = ctx.state.user.email;
+  await ctx.session.destroy();
+  if (!ctx.session) {
+    ctx.body = {
+      status: 200,
+      data: `Hasta luego ${userName}`,
+    };
+  } else {
+    ctx.body = {
+      status: 200,
+      data: `Logout error`,
+    };
+  }
 };

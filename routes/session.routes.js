@@ -1,10 +1,11 @@
-import { Router } from "express";
+import Router from 'koa-router';
 import {
     getSessionInfo,
     saveSession,
     deleteSession
 } from "../controller/session.controller.js";
-const sessionRouter = Router();
+
+const sessionRouter = new Router();
 
 sessionRouter.get("/session-info", getSessionInfo);
 sessionRouter.post("/session-save", saveSession);

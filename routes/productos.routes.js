@@ -1,4 +1,4 @@
-import { Router } from "express";
+import Router from 'koa-router';
 import {
     getAllProducts,
     addProduct,
@@ -6,7 +6,8 @@ import {
     getProductById,
     modifyProductById,
 } from "../controller/productos.controller.js";
-const productosRouter = Router();
+
+const productosRouter = new Router();
 
 productosRouter.get("/", getAllProducts);
 productosRouter.get("/:id", getProductById);

@@ -12,14 +12,14 @@ const args = yargs(process.argv.slice(2))
     .argv;
 const numCPUs = os.cpus().length;
 
-export const getProductsTest = async (req, res) => {
+export const getProductsTest = async (ctx) => {
     logger.log({level: "info", message: "Request [GET] to /productos-test"})
     const products = generateRandomProducts(5)
-    res.json({products})
+    ctx.body = {products}
 };
-export const getInfo = async (req, res) => {
+export const getInfo = async (ctx) => {
     logger.log({ level: "info", message: "Request [GET] to /info" })
-    res.json({
+    ctx.body = {
         argumentosEntrada: args,
         SO: process.platform,
         nodeVersion: process.version,
@@ -28,11 +28,11 @@ export const getInfo = async (req, res) => {
         PID: process.pid,
         projectDir: process.cwd(),
         numCPUs: numCPUs,
-    })
+    }
 };
-export const getInfoLog = async (req, res) => {
-    logger.log({ level: "info", message: "Request [GET] to /info" })
-    res.json({
+export const getInfoLog = async (ctx) => {
+    logger.log({ level: "info", message: "Request [GET] to /info" });
+    ctx.body = {
         argumentosEntrada: args,
         SO: process.platform,
         nodeVersion: process.version,
@@ -41,11 +41,11 @@ export const getInfoLog = async (req, res) => {
         PID: process.pid,
         projectDir: process.cwd(),
         numCPUs: numCPUs,
-    })
+    };
 };
-export const getRandoms = async (req, res) => {
-    logger.log({level: "info", message: "Request [GET] to /randoms"})
-    const cant = parseInt(req.query.cant) || 100000000;
+export const getRandoms = async (ctx) => {
+    logger.log({ level: "info", message: "Request [GET] to /randoms" })
+    const cant = parseInt(ctx.query.cant) || 100000000;
     const forkedRandomNumberGenerator = fork('../lib/generateRandomNumbers.js')
 
     forkedRandomNumberGenerator.on("message", (result) => {
@@ -53,7 +53,7 @@ export const getRandoms = async (req, res) => {
         if (result === "Iniciado") {
             forkedRandomNumberGenerator.send(cant)
         } else {
-            res.json(result)
+            ctx.body = result;
         }
-    })
+    });
 };
